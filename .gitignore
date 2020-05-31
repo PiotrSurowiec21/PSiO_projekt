@@ -1,7 +1,14 @@
-.git
+// pliki QT Creator
+
 .pro
 .pro.user
 .o
 .qmake.stash
+
+// pliki wykonalne
+
 .exe
 
+// pliki bibliotek
+
+.dll
