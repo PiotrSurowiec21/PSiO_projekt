@@ -22,6 +22,8 @@ public:
 
 class gameplay{
 
+public:
+    gameStart(){}
 };
 
 class target{
@@ -39,9 +41,8 @@ public:
 };
 
 class player{
-    int score;
+    int hp;
     sf::Vector2<int> size(1, 1);
-
 
 };
 
