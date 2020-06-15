@@ -1,49 +1,81 @@
 #ifndef SHOOTINGRANGE_H
 #define SHOOTINGRANGE_H
+#include <cstdlib>
+#include <ctime>
 #include <vector>
+#include <iostream>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 
-class scene{
-    std::vector<sf::Sprite> toDraw;
-    std::vector<sf::Texture> textures;
-    sf::RenderWindow MyWindow;
+class obiect: public sf::Sprite{
+protected:
+
 public:
-    scene(int W, int H) : MyWindow(sf::VideoMode(W,H), "Shooting Range game"){
-    }
-
-    void drawScene(){
-    }
-
-    void loop(){
+    obiect(sf::Vector2f position ){
+        setPosition(position);
     }
 
 };
 
-class gameplay{
-
-public:
-    gameStart(){}
-};
-
-class target{
+class target: public obiect{
+protected:
     double DisplayTime;
-    int position;
+    sf::Vector2f position;
+    float speedPerSec;
     int scale;
 public:
-    target(){
+    target(sf::Texture texture, sf::Vector2f position, int scale, int move): obiect(position){
+        setTexture(texture);
+        switch (scale) {
+        case 1: setScale(1,1);
+            break;
+        case 2: setScale(2,2);
+            break;
+        case 3: setScale(3,3);
+        }
 
     }
-    int hit(){
+    int hit(sf::Vector2f gunpointPos){
 
     }
+
+    void animate(){
+
+    }
+
+
 
 };
 
-class player{
+class player: public obiect{
+protected:
+    int points;
     int hp;
-    sf::Vector2<int> size(1, 1);
+public:
+    player(sf::Texture & texture,sf::Vector2f position, sf::Vector2f scale) : obiect(position){
+        setTexture(texture);
+        setScale(scale);
+    }
 
+    sf::Vector2f checkIfHit(){
+        sf::FloatRect bounds= getGlobalBounds();
+        sf::Vector2f centerPos(bounds.left+(bounds.width/2), bounds.top+(bounds.height/2));
+        std::cout<<centerPos.x<<"   "<<centerPos.y<<std::endl;
+
+    }
+
+    void move(sf::Vector2f Recoil, sf::RenderWindow & window){
+        sf::Vector2f mousePos= window.mapPixelToCoords(sf::Mouse::getPosition(window))+Recoil;
+        setPosition(mousePos);
+    }
+};
+
+class bulletMarks: public obiect{
+public:
+    bulletMarks(sf::Vector2f point, sf::Texture& texture, sf::Vector2f scale):obiect(point){
+        setTexture(texture);
+        setScale(scale);
+    }
 };
 
 #endif // SHOOTINGRANGE_H
