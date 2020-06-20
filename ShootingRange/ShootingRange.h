@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <string>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 
@@ -23,12 +24,15 @@ protected:
     double DisplayTime;
     sf::FloatRect bounds;
     sf::Vector2f position;
-    float speedPerSec=100, maxSpeed=200;
+    float speedPerSec=0;
     int scale;
+    bool isShow=true;
 public:
-    target(sf::Texture & texture, sf::Vector2f position, int Scale): obiect(position){
+    target(sf::Texture & texture, sf::Vector2f position, int Scale, float velocity, float time): obiect(position){
         setTexture(texture);
         scale=Scale;
+        DisplayTime=time;
+        speedPerSec=velocity;
         switch (Scale) {
         case 1: setScale(1,1);
             break;
@@ -47,7 +51,7 @@ public:
         if(GPPos.x>=bounds.left && GPPos.x<=(bounds.left+bounds.width) &&
                 GPPos.y>=bounds.top && GPPos.y<=bounds.top+bounds.height){
             points++;
-            //std::cout<<powf(GPPos.x-center.x, 2)<<"      "<<((r1*r1)-powf(GPPos.y-center.y,2))<<"      "<< center.x<<"      "<< center.y<<"      "<<r1*r1 <<std::endl;
+            isShow=false;
            if(powf(GPPos.x-center.x, 2)<=((r1*r1)-powf(GPPos.y-center.y,2))){
                 points++;
                 if(powf(GPPos.x-center.x, 2)<=((r2*r2)-powf(GPPos.y-center.y,2))){
@@ -58,17 +62,31 @@ public:
         return (points*10)/scale;
     }
 
-    void animate(int round, float fTime){
-        if(round>10){
-            if(bounds.left<(150/scale)){
-                speedPerSec=fabs(speedPerSec);
-            }
-            else if (bounds.left+bounds.width>1600-(150/scale)) {
-                speedPerSec=-(fabs(speedPerSec));
-            }
-            move(speedPerSec*fTime, 0);
-            bounds=getGlobalBounds();
+    void animate(float fTime){
+        if(bounds.left<(150/scale)){
+            speedPerSec=fabs(speedPerSec);
         }
+        else if (bounds.left+bounds.width>1600-(150/scale)) {
+            speedPerSec=-(fabs(speedPerSec));
+        }
+        move(speedPerSec*fTime, 0);
+        bounds=getGlobalBounds();
+    }
+
+    bool hide(float time){
+        if(time>DisplayTime){
+            isShow=false;
+            return true;
+        }
+        else{return false;}
+    }
+
+    bool show(){
+        return isShow;
+    }
+
+    float getSpeed(){
+        return speedPerSec;
     }
 };
 
@@ -80,6 +98,8 @@ public:
     player(sf::Texture & texture,sf::Vector2f position, sf::Vector2f scale) : obiect(position){
         setTexture(texture);
         setScale(scale);
+        score=0;
+        hp=5;
     }
 
     sf::Vector2f checkIfHit(){
@@ -93,16 +113,20 @@ public:
         sf::Vector2f mousePos= window.mapPixelToCoords(sf::Mouse::getPosition(window))+Recoil;
         setPosition(mousePos);
     }
+
     void modifyStats(int points){
         if(points==0){
             hp--;
         }
         else {
             score+=points;
-
         }
         std::cout<<"hp:"<<hp<<"      score:"<<score<<std::endl;
     }
+
+    int getHP(){return hp;};
+
+    int getScore(){return score;}
 };
 
 class bulletMarks: public obiect{
@@ -111,10 +135,156 @@ public:
         setTexture(texture);
         setScale(scale);
     }
+    ~bulletMarks() {std::cout<<"USUNIETO OBIEKT PRZESTRZELINA"<<std::endl;}
 };
 
-class interface{
 
+
+class gameplay{
+protected:
+    int lvl=1;
+    player* Player;
+    std::vector<target*> Target;
+    std::vector<bulletMarks*> BulletMarks;
+    sf::Vector2f recoil;
+    std::vector<sf::Sprite> hpSprites;
+    sf::Text counter, gameOver;
+    bool roundCreated=false;
+    float velocity = 0;
+    int x=100;
+
+public:
+    gameplay(sf::Texture & texture,sf::Vector2f position1, sf::Vector2f scale,
+             sf::Texture& texture2, sf::Font& font){
+        this->Player=new player (texture, position1, scale);
+        counter.setFont(font);
+        counter.setPosition(1425, 25);
+        counter.setCharacterSize(60);
+        counter.setColor(sf::Color::Black);
+        gameOver.setFont(font);
+        gameOver.setPosition(450, 200);
+        gameOver.setCharacterSize(100);
+        gameOver.setColor(sf::Color::Red);
+        gameOver.setString("GAME OVER");
+
+        for(int i=0; i<Player->getHP(); i++){
+            sf::Sprite heart;
+            heart.setTexture(texture2);
+            heart.setScale(0.05, 0.05);
+            heart.setPosition(25+i*70, 25);
+            hpSprites.emplace_back(heart);
+        }
+
+}
+
+    void generateObiects(sf::Texture & texture,sf::Clock& clock){       
+       float dt;
+       if(roundCreated==0){
+           if(lvl<=3){
+               dt=7;
+               for(int i = 0; i<lvl; i++){
+                   dt*=0.8;
+                   Target.emplace_back(new target(texture, sf::Vector2f(rand()%1300+150, 300), 3, 0, dt));
+               }
+           }
+           else if(lvl>=4 && lvl<=6){
+               dt=5;
+               for(int i = 0; i<3; i++){
+                   dt*=0.8;
+                   Target.emplace_back(new target(texture, sf::Vector2f(rand()%1300+150, 300), (rand()%3)+1, 0, dt));
+               }
+           }
+           else if(lvl>=7){
+               dt=5;
+               for(int i = 0; i<3; i++){
+                   dt=dt*0.8;
+                   velocity = (rand()%25)+x;
+                   x+=10;
+                   if((rand()%2)+1==1){velocity*=-1;}
+                   Target.emplace_back(new target(texture, sf::Vector2f(rand()%1300+150, 300), (rand()%3)+1, velocity, dt));
+               }
+           }
+           //std::cout<<"v="<<velocity<<std::endl;
+           //std::cout<<"lvl:"<<lvl<<std::endl;
+           clock.restart();
+           roundCreated=true;
+       }
+    }
+
+    void drawAll(sf::RenderWindow& window){
+        if(Player->getHP()<=0){
+            window.draw(gameOver);
+        }
+        else{
+            for(auto &a : Target){
+                if(a->show()){
+                    window.draw(*a);
+                }
+            }
+            for(auto& BM: BulletMarks){
+                window.draw(*BM);
+            }
+            for(auto& HP: hpSprites){
+                window.draw(HP);
+            }
+            window.draw(*Player);
+
+            window.draw(counter);
+        }
+        window.draw(counter);
+    }
+
+    void onEvent(sf::Event& event, sf::Texture& BulletMarkTex){
+        if (event.type == sf::Event::MouseButtonPressed) {
+            if(event.mouseButton.button == sf::Mouse::Left) {
+                recoil=sf::Vector2f((std::rand()%20)-20,(std::rand()%20)-10);
+                int isHit=0;
+                for(auto i=0; i<Target.size(); i++){
+                    isHit+=Target[i]->hit(Player->checkIfHit());
+                    BulletMarks.emplace_back(new bulletMarks(Player->checkIfHit()-sf::Vector2f(12,12), BulletMarkTex, sf::Vector2f(0.1, 0.1)));
+                }
+                Player->modifyStats(isHit);
+            }
+        }
+    }
+
+    void updateAll(sf::RenderWindow& window, float tAnim, float tFrame){
+        Player->move(recoil, window);
+        for(auto &a : Target){
+            if(a->hide(tAnim)==true);//{Player->modifyStats(0);}
+        }
+        for(auto &a : Target){
+            a->animate(tFrame);
+        }
+
+        if(hpSprites.size()>Player->getHP()){
+            hpSprites.erase(hpSprites.end());
+        }
+
+        counter.setString(std::to_string(Player->getScore()));
+
+    }
+    void nextRound(){
+        if(roundCreated==true){
+            int howManyIsShow=0;
+            for(auto &a : Target){
+                if(!a->show()){howManyIsShow++;}
+            }
+            if(howManyIsShow==Target.size()){
+                Target.clear();
+                BulletMarks.clear();
+                lvl++;
+                roundCreated=false;
+            }
+        }
+    }
+
+    void loseGame(){
+        if(Player->getHP()==0){
+            Target.clear();
+            BulletMarks.clear();
+        }
+    }
 };
 
 #endif // SHOOTINGRANGE_H
