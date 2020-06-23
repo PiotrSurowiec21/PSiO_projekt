@@ -17,6 +17,8 @@ public:
         setPosition(position);
     }
 
+    ~obiect(){
+    }
 };
 
 class target: public obiect{
@@ -74,11 +76,13 @@ public:
     }
 
     bool hide(float time){
-        if(time>DisplayTime){
-            isShow=false;
-            return true;
+        if(isShow==1){
+            if(time>DisplayTime){
+                isShow=false;
+                return true;
+            }
+            else{return false;}
         }
-        else{return false;}
     }
 
     bool show(){
@@ -88,6 +92,8 @@ public:
     float getSpeed(){
         return speedPerSec;
     }
+
+    ~target(){}
 };
 
 class player: public obiect{
@@ -127,6 +133,13 @@ public:
     int getHP(){return hp;};
 
     int getScore(){return score;}
+
+    void defaults(){
+        score=0;
+        hp=5;
+    }
+
+    ~player(){}
 };
 
 class bulletMarks: public obiect{
@@ -148,14 +161,14 @@ protected:
     std::vector<bulletMarks*> BulletMarks;
     sf::Vector2f recoil;
     std::vector<sf::Sprite> hpSprites;
+    sf::Sprite* heart;
     sf::Text counter, gameOver;
     bool roundCreated=false;
     float velocity = 0;
     int x=100;
 
 public:
-    gameplay(sf::Texture & texture,sf::Vector2f position1, sf::Vector2f scale,
-             sf::Texture& texture2, sf::Font& font){
+    gameplay(sf::Texture & texture,sf::Vector2f position1, sf::Vector2f scale, sf::Font& font){
         this->Player=new player (texture, position1, scale);
         counter.setFont(font);
         counter.setPosition(1425, 25);
@@ -166,63 +179,100 @@ public:
         gameOver.setCharacterSize(100);
         gameOver.setColor(sf::Color::Red);
         gameOver.setString("GAME OVER");
-
-        for(int i=0; i<Player->getHP(); i++){
-            sf::Sprite heart;
-            heart.setTexture(texture2);
-            heart.setScale(0.05, 0.05);
-            heart.setPosition(25+i*70, 25);
-            hpSprites.emplace_back(heart);
-        }
-
 }
 
-    void generateObiects(sf::Texture & texture,sf::Clock& clock){       
-       float dt;
-       if(roundCreated==0){
-           if(lvl<=3){
-               dt=7;
-               for(int i = 0; i<lvl; i++){
-                   dt*=0.8;
-                   Target.emplace_back(new target(texture, sf::Vector2f(rand()%1300+150, 300), 3, 0, dt));
+    void generateObiects(sf::Texture & texture, sf::Clock& clock, sf::Texture& texture2){
+        float dt;
+        if(roundCreated==0){
+            std::vector<sf::FloatRect> bounds;
+            if(lvl<4){
+                dt=7;
+                for(int i = 0; i<lvl; i++){
+                    dt*=0.8;
+                    Target.emplace_back(new target(texture, sf::Vector2f(rand()%1300+150, 300), 3, 0, dt));
+                    sf::FloatRect aRec=Target[i]->getGlobalBounds();
+                    if(lvl!=1){
+                        for(int j=0;j<bounds.size();j++){
+                            if((bounds[j].left>=aRec.left+aRec.width <= bounds[j].left+bounds[j].width) ||
+                                    (bounds[j].left>=aRec.left <= bounds[j].left+bounds[j].width)){
+                                std::cout<<"warunek spelnony"<<std::endl;
+                                if(Target[i]->getPosition().x<=550){Target[i]->move(150,0);}
+                                else{Target[i]->move(-150,0);}
+                                aRec=Target[i]->getGlobalBounds();
+                            }
+                        }
+                    }
+                    bounds.emplace_back(aRec);
+                }
+            }
+            else if(lvl>=4 && lvl<=6){
+                dt=5;
+                for(int i = 0; i<3; i++){
+                    dt*=0.8;
+                    Target.emplace_back(new target(texture, sf::Vector2f(rand()%1300+150, 300), (rand()%3)+1, 0, dt));
+                    sf::FloatRect aRec=Target[i]->getGlobalBounds();
+
+                    for(int j=0;j<bounds.size();j++){
+                        if(bounds[j].left>=aRec.left+aRec.width <= bounds[j].left+bounds[j].width ||
+                                bounds[j].left>=aRec.left <= bounds[j].left+bounds[j].width){
+                            std::cout<<"warunek spelnony"<<std::endl;
+                            if(Target[i]->getPosition().x<=550){Target[i]->move(150,0);}
+                            else{Target[i]->move(-150,0);}
+                            aRec=Target[i]->getGlobalBounds();
+                        }
+                    }
+                    bounds.emplace_back(aRec);
+                }
+            }
+            else if(lvl>=7){
+                dt=5;
+                for(int i = 0; i<3; i++){
+                    dt=dt*0.8;
+                    velocity = (rand()%25)+x;
+                    x+=10;
+                    if((rand()%2)+1==1){velocity*=-1;}
+                    Target.emplace_back(new target(texture, sf::Vector2f(rand()%1300+150, 300), (rand()%3)+1, velocity, dt));
+                    sf::FloatRect aRec=Target[i]->getGlobalBounds();
+                    for(int j=0;j<bounds.size();j++){
+                        if(bounds[j].left>=aRec.left+aRec.width <= bounds[j].left+bounds[j].width ||
+                                bounds[j].left>=aRec.left <= bounds[j].left+bounds[j].width){
+                            std::cout<<"warunek spelnony"<<std::endl;
+                            if(Target[i]->getPosition().x<=550){Target[i]->move(150,0);}
+                            else{Target[i]->move(-150,0);}
+                            aRec=Target[i]->getGlobalBounds();
+
+                        }
+                    }
+                    bounds.emplace_back(aRec);
+                }
+            }
+           if(lvl==1){
+               for(int i=0; i<=Player->getHP(); i++){
+                   sf::Sprite x;
+                   x.setTexture(texture2);
+                   x.setScale(0.05, 0.05);
+                   x.setPosition(25+i*70, 25);
+                   hpSprites.emplace_back(x);
                }
            }
-           else if(lvl>=4 && lvl<=6){
-               dt=5;
-               for(int i = 0; i<3; i++){
-                   dt*=0.8;
-                   Target.emplace_back(new target(texture, sf::Vector2f(rand()%1300+150, 300), (rand()%3)+1, 0, dt));
-               }
-           }
-           else if(lvl>=7){
-               dt=5;
-               for(int i = 0; i<3; i++){
-                   dt=dt*0.8;
-                   velocity = (rand()%25)+x;
-                   x+=10;
-                   if((rand()%2)+1==1){velocity*=-1;}
-                   Target.emplace_back(new target(texture, sf::Vector2f(rand()%1300+150, 300), (rand()%3)+1, velocity, dt));
-               }
-           }
-           //std::cout<<"v="<<velocity<<std::endl;
-           //std::cout<<"lvl:"<<lvl<<std::endl;
            clock.restart();
            roundCreated=true;
+
        }
-    }
+}
 
     void drawAll(sf::RenderWindow& window){
         if(Player->getHP()<=0){
             window.draw(gameOver);
         }
         else{
+            for(auto& BM: BulletMarks){
+                window.draw(*BM);
+            }
             for(auto &a : Target){
                 if(a->show()){
                     window.draw(*a);
                 }
-            }
-            for(auto& BM: BulletMarks){
-                window.draw(*BM);
             }
             for(auto& HP: hpSprites){
                 window.draw(HP);
@@ -246,24 +296,28 @@ public:
                 Player->modifyStats(isHit);
             }
         }
+        if( event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space ){
+                defaultValues();
+        }
     }
 
     void updateAll(sf::RenderWindow& window, float tAnim, float tFrame){
         Player->move(recoil, window);
         for(auto &a : Target){
-            if(a->hide(tAnim)==true);//{Player->modifyStats(0);}
+            bool b=a->hide(tAnim);
+            if(b){
+
+            }
         }
         for(auto &a : Target){
             a->animate(tFrame);
         }
-
         if(hpSprites.size()>Player->getHP()){
-            hpSprites.erase(hpSprites.end());
+            hpSprites.pop_back();
         }
-
         counter.setString(std::to_string(Player->getScore()));
-
     }
+
     void nextRound(){
         if(roundCreated==true){
             int howManyIsShow=0;
@@ -272,18 +326,22 @@ public:
             }
             if(howManyIsShow==Target.size()){
                 Target.clear();
-                BulletMarks.clear();
+                //BulletMarks.clear();
                 lvl++;
                 roundCreated=false;
             }
         }
     }
 
-    void loseGame(){
-        if(Player->getHP()==0){
-            Target.clear();
-            BulletMarks.clear();
-        }
+
+    void defaultValues(){
+        lvl=1;
+        roundCreated=false;
+        velocity = 0;
+        x=100;
+        Target.clear();
+        BulletMarks.clear();
+        Player->defaults();
     }
 };
 

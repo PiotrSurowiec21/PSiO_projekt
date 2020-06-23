@@ -45,7 +45,7 @@ int main()
         std::cout<<"no i chu no i czesc"<<std::endl;
     }
 
-    gameplay play(GunPointTex, sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2),sf::Vector2f(0.05, 0.05), hpTex, font);
+    gameplay play(GunPointTex, sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2),sf::Vector2f(0.05, 0.05), font);
     sf::Vector2f recoil;
     sf::Clock clockFrame, clockAnim;
     while (window.isOpen()) {
@@ -53,13 +53,14 @@ int main()
         sf::Time frameTime = clockFrame.restart();
         sf::Time animTime = clockAnim.getElapsedTime();
 
-        play.generateObiects(TargetTex, clockAnim);
+        play.generateObiects(TargetTex,clockAnim, hpTex);
 
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed){
                 window.close();
             }
             play.onEvent(event, BulletMarkTex);
+            break;
 
         }
 
