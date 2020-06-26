@@ -48,6 +48,7 @@ int main()
     gameplay play(GunPointTex, sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2),sf::Vector2f(0.05, 0.05), font);
     sf::Vector2f recoil;
     sf::Clock clockFrame, clockAnim;
+
     while (window.isOpen()) {
         sf::Event event;
         sf::Time frameTime = clockFrame.restart();

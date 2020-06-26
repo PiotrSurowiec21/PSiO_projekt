@@ -28,7 +28,6 @@ protected:
     sf::Vector2f position;
     float speedPerSec=0;
     int scale;
-    bool isShow=true;
 public:
     target(sf::Texture & texture, sf::Vector2f position, int Scale, float velocity, float time): obiect(position){
         setTexture(texture);
@@ -53,7 +52,6 @@ public:
         if(GPPos.x>=bounds.left && GPPos.x<=(bounds.left+bounds.width) &&
                 GPPos.y>=bounds.top && GPPos.y<=bounds.top+bounds.height){
             points++;
-            isShow=false;
            if(powf(GPPos.x-center.x, 2)<=((r1*r1)-powf(GPPos.y-center.y,2))){
                 points++;
                 if(powf(GPPos.x-center.x, 2)<=((r2*r2)-powf(GPPos.y-center.y,2))){
@@ -76,17 +74,12 @@ public:
     }
 
     bool hide(float time){
-        if(isShow==1){
             if(time>DisplayTime){
-                isShow=false;
                 return true;
             }
-            else{return false;}
-        }
-    }
-
-    bool show(){
-        return isShow;
+            else {
+                return false;
+            }
     }
 
     float getSpeed(){
@@ -151,8 +144,6 @@ public:
     ~bulletMarks() {std::cout<<"USUNIETO OBIEKT PRZESTRZELINA"<<std::endl;}
 };
 
-
-
 class gameplay{
 protected:
     int lvl=1;
@@ -162,7 +153,7 @@ protected:
     sf::Vector2f recoil;
     std::vector<sf::Sprite> hpSprites;
     sf::Sprite* heart;
-    sf::Text counter, gameOver;
+    sf::Text counter, gameOver, pressAnyKey;
     bool roundCreated=false;
     float velocity = 0;
     int x=100;
@@ -179,6 +170,11 @@ public:
         gameOver.setCharacterSize(100);
         gameOver.setColor(sf::Color::Red);
         gameOver.setString("GAME OVER");
+        pressAnyKey.setFont(font);
+        pressAnyKey.setPosition(480, 400);
+        pressAnyKey.setCharacterSize(35);
+        pressAnyKey.setColor(sf::Color::Black);
+        pressAnyKey.setString("press SPACE to conitinue");
 }
 
     void generateObiects(sf::Texture & texture, sf::Clock& clock, sf::Texture& texture2){
@@ -236,7 +232,6 @@ public:
                     for(int j=0;j<bounds.size();j++){
                         if(bounds[j].left>=aRec.left+aRec.width <= bounds[j].left+bounds[j].width ||
                                 bounds[j].left>=aRec.left <= bounds[j].left+bounds[j].width){
-                            std::cout<<"warunek spelnony"<<std::endl;
                             if(Target[i]->getPosition().x<=550){Target[i]->move(150,0);}
                             else{Target[i]->move(-150,0);}
                             aRec=Target[i]->getGlobalBounds();
@@ -264,15 +259,14 @@ public:
     void drawAll(sf::RenderWindow& window){
         if(Player->getHP()<=0){
             window.draw(gameOver);
+            window.draw(pressAnyKey);
         }
         else{
             for(auto& BM: BulletMarks){
                 window.draw(*BM);
             }
-            for(auto &a : Target){
-                if(a->show()){
-                    window.draw(*a);
-                }
+            for(int i = Target.size()-1; i>=0; i--){
+                    window.draw(*Target[i]);
             }
             for(auto& HP: hpSprites){
                 window.draw(HP);
@@ -290,7 +284,12 @@ public:
                 recoil=sf::Vector2f((std::rand()%20)-20,(std::rand()%20)-10);
                 int isHit=0;
                 for(auto i=0; i<Target.size(); i++){
-                    isHit+=Target[i]->hit(Player->checkIfHit());
+                    int points = Target[i]->hit(Player->checkIfHit());
+                    if(points){
+                        isHit+=points;
+                        Target.erase(Target.begin()+i);
+                        break;
+                    }
                     BulletMarks.emplace_back(new bulletMarks(Player->checkIfHit()-sf::Vector2f(12,12), BulletMarkTex, sf::Vector2f(0.1, 0.1)));
                 }
                 Player->modifyStats(isHit);
@@ -303,14 +302,14 @@ public:
 
     void updateAll(sf::RenderWindow& window, float tAnim, float tFrame){
         Player->move(recoil, window);
-        for(auto &a : Target){
-            bool b=a->hide(tAnim);
-            if(b){
-
+        if(Target.size()!=0){
+            for(auto i = 0; i<Target.size(); i++){
+                Target[i]->animate(tFrame);
+                if(Target[i]->hide(tAnim)){
+                    Player->modifyStats(0);
+                    Target.erase(Target.begin()+i);
+                }
             }
-        }
-        for(auto &a : Target){
-            a->animate(tFrame);
         }
         if(hpSprites.size()>Player->getHP()){
             hpSprites.pop_back();
@@ -320,13 +319,9 @@ public:
 
     void nextRound(){
         if(roundCreated==true){
-            int howManyIsShow=0;
-            for(auto &a : Target){
-                if(!a->show()){howManyIsShow++;}
-            }
-            if(howManyIsShow==Target.size()){
+            if(Target.size()==0){
                 Target.clear();
-                //BulletMarks.clear();
+                BulletMarks.clear();
                 lvl++;
                 roundCreated=false;
             }
