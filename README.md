@@ -1,6 +1,8 @@
 # OPIS PROJEKTU ZALICZNIOWEGO
 ## Zarys projektu: 
 Mechanika gry będzie symulować strzelnicę, mechanika Będzie opierała się na strzelaniu do losowo pojawiających się na określony czas celów i zaliczaniu punktów w zależności od miejsca w które się trafiło (trzy hitboxy: wewnętrzny, środkowy, zewnętrzny) oraz odległości (blisko, średnio, daleko), gra będzie toczyć się do pięciu strzałów poza tarczę/nie zestrzeleniu celu przed czasem, z każdym trafieniem gra przyspiesza, ilość amunicji jest nieograniczona.
+## Sterowanie:
+Sterowanie realizowane jest za pomocą myszki, "celownik" jest sterowany ruchem myszki, "strzał" oddaje się lewym przyciskiem, aby zresetować stan gry do początkowego w dowolnym momencie należy nacisnąć spację
 ## Wykorzystane bibloteki i języki:
 SFML 2.5.1 + C++ 17
 ## Wykorzystane zasoby:
